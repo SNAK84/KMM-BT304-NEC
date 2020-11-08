@@ -3,7 +3,7 @@
 #include <AnalogButtons.h>
 
 AnalogButtons CruiseButtons(A1, INPUT);
-AnalogButtons AudioButtons(A2, INPUT);
+AnalogButtons AudioButtons(A2, INPUT, 5,40);
 
 #define VOLUP 0x14      //громкость +
 #define VOLDOWN 0x15    //громкость -
@@ -23,6 +23,8 @@ AnalogButtons AudioButtons(A2, INPUT);
 #define LED 13
 #define ADDRESS 0xB9 //протокол
 
+#define HoldBtnCruiseTime 200
+
 void SendCommand(unsigned char value);
 unsigned char GetInput(void);
 void SendZero();
@@ -34,28 +36,28 @@ void CruiseMainClick()
 {
   Serial.println("Cruise Main button clicked");
   digitalWrite(5, LOW);
-  delay(100);
+  delay(HoldBtnCruiseTime);
   digitalWrite(5, HIGH);
 }
 void CruiseCancelClick()
 {
   Serial.println("Cruise Cancel button clicked");
   digitalWrite(6, HIGH);
-  delay(100);
+  delay(HoldBtnCruiseTime);
   digitalWrite(6, LOW);
 }
 void CruiseResumeClick()
 {
   Serial.println("Cruise Resume button clicked");
   digitalWrite(7, HIGH);
-  delay(100);
+  delay(HoldBtnCruiseTime);
   digitalWrite(7, LOW);
 }
 void CruiseSetClick()
 {
   Serial.println("Cruise Set button clicked");
   digitalWrite(8, HIGH);
-  delay(100);
+  delay(HoldBtnCruiseTime);
   digitalWrite(8, LOW);
 }
 
@@ -110,16 +112,16 @@ void AudioVolDownHold()
   SendCommand(VOLDOWN);
 }
 
-Button CruiseMain = Button(655, &CruiseMainClick);
+Button CruiseMain = Button(446, &CruiseMainClick);
 Button CruiseCancel = Button(0, &CruiseCancelClick);
-Button CruiseResume = Button(300, &CruiseResumeClick);
-Button CruiseSet = Button(93, &CruiseSetClick);
+Button CruiseResume = Button(156, &CruiseResumeClick);
+Button CruiseSet = Button(42, &CruiseSetClick);
 
-Button AudioMode = Button(500, &AudioModeClick, &AudioModeHold, 250, 50);
-Button AudioUp = Button(167, &AudioUpClick, &AudioUpHold, 250, 50);
-Button AudioDown = Button(341, &AudioDownClick, &AudioDownHold, 250, 50);
-Button AudioVolUp = Button(697, &AudioVolUpClick, &AudioVolUpHold, 250, 50);
-Button AudioVolDown = Button(774, &AudioVolDownClick, &AudioVolDownHold, 250, 50);
+Button AudioMode = Button(300, &AudioModeClick, &AudioModeHold, 250, 5000);
+Button AudioUp = Button(80, &AudioUpClick, &AudioUpHold, 250, 1000);
+Button AudioDown = Button(200, &AudioDownClick, &AudioDownHold, 250, 1000);
+Button AudioVolUp = Button(490, &AudioVolUpClick, &AudioVolUpHold, 250, 50);
+Button AudioVolDown = Button(590, &AudioVolDownClick, &AudioVolDownHold, 250, 50);
 
 void setup()
 {
@@ -157,17 +159,20 @@ void setup()
 
   digitalWrite(LED, LOW);
 }
-
+long LastTimrCong = 0;
 void loop()
 {
   CruiseButtons.check();
   AudioButtons.check();
-/*
-  Serial.print(" analogA1 ");            //(для настройки)
-  Serial.print(analogRead(A1));                //для просмотра данный от аналогового входа (для настройки)
-  Serial.print(" analogA2 ");            //(для настройки)
-  Serial.println(analogRead(A2));                //для просмотра данный от аналогового входа (для настройки)
-  delay(250);*/
+
+  if (millis() - LastTimrCong > 250)
+  {
+    Serial.print(" Cruise A1: ");   //(для настройки)
+    Serial.print(analogRead(A1));   //для просмотра данный от аналогового входа (для настройки)
+    Serial.print(" Audio A2: ");    //(для настройки)
+    Serial.println(analogRead(A2)); //для просмотра данный от аналогового входа (для настройки)
+    LastTimrCong = millis();
+  }
 }
 
 void SendValue(unsigned char value)
